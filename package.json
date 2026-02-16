@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "build": "tsc",
+    "serve": "npx http-server . -p 8080 -o --cors"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
