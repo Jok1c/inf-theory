@@ -34,14 +34,27 @@
         </div>
 
         <div class="form-group">
-            <label for="fileInput">Выберите файл:</label>
+            <label for="textInput">Или введите текст с клавиатуры:</label>
+            <textarea id="textInput" class="form-control textarea" placeholder="Введите текст для шифрования/расшифровки..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="fileInput">Или выберите файл:</label>
             <input type="file" id="fileInput" class="form-control file-input" accept=".txt,.text">
             <small class="form-hint">Поддерживаются текстовые файлы (.txt)</small>
         </div>
 
         <div class="button-group">
+            <button id="encryptTextBtn" class="btn btn-primary">Зашифровать текст</button>
+            <button id="decryptTextBtn" class="btn btn-secondary">Расшифровать текст</button>
             <button id="encryptFileBtn" class="btn btn-primary">Зашифровать файл</button>
             <button id="decryptFileBtn" class="btn btn-secondary">Расшифровать файл</button>
+        </div>
+
+        <div class="form-group" id="resultSection" style="display: none;">
+            <label for="resultOutput">Результат:</label>
+            <textarea id="resultOutput" class="form-control textarea" readonly></textarea>
+            <button id="copyResultBtn" class="btn btn-secondary" style="margin-top: 10px;">Копировать результат</button>
         </div>
 
         <div class="info-box">
@@ -50,6 +63,6 @@
         </div>
     </div>
 
-    <script src="./dist/app.js?v=11"></script>
+    <script src="./dist/app.js?v=13"></script>
 </body>
 </html>

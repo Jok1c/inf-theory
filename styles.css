@@ -160,6 +160,12 @@ header h1 {
     background: linear-gradient(135deg, #e082ea 0%, #e4465b 100%);
 }
 
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
 .info-box {
     background: #f8f9ff;
     border-left: 4px solid #667eea;

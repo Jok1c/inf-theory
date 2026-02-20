@@ -1,3 +1,4 @@
+// Класс для шифрования методом децимации (умножения)
 class DecimationCipher {
     private russianAlphabet: string = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя';
     private alphabetSize: number;
@@ -8,6 +9,7 @@ class DecimationCipher {
         this.key = this.validateKey(key);
     }
 
+    // Проверка, что ключ взаимно прост с размером алфавита
     private validateKey(key: string): number {
         const k = parseInt(key, 10);
         if (this.gcd(k, this.alphabetSize) !== 1) {
@@ -16,6 +18,7 @@ class DecimationCipher {
         return k;
     }
 
+    // Вычисление НОД алгоритмом Евклида
     private gcd(a: number, b: number): number {
         while (b !== 0) {
             const temp = b;
@@ -25,6 +28,7 @@ class DecimationCipher {
         return a;
     }
 
+    // Расширенный алгоритм Евклида для нахождения обратного элемента
     private extendedGcd(a: number, b: number): { gcd: number; x: number; y: number } {
         if (a === 0) {
             return { gcd: b, x: 0, y: 1 };
@@ -35,40 +39,37 @@ class DecimationCipher {
         return { gcd: result.gcd, x, y };
     }
 
+    // Вычисление обратного элемента по модулю
     private modInverse(a: number, m: number): number {
         const result = this.extendedGcd(a % m, m);
         return ((result.x % m) + m) % m;
     }
 
-    private filterText(text: string): string {
+    // Шифрование: каждая буква умножается на ключ по модулю
+    encrypt(text: string): string {
+        if (!text) return '';
         return text
             .toLowerCase()
             .split('')
-            .filter(c => this.russianAlphabet.includes(c))
-            .join('');
-    }
-
-    encrypt(text: string): string {
-        const filteredText = this.filterText(text);
-        if (!filteredText) return '';
-        return filteredText
-            .split('')
             .map(char => {
                 const pos = this.russianAlphabet.indexOf(char);
+                if (pos === -1) return char;
                 const encryptedPos = (pos * this.key) % this.alphabetSize;
                 return this.russianAlphabet[encryptedPos];
             })
             .join('');
     }
 
+    // Расшифрование: каждая буква умножается на обратный ключ по модулю
     decrypt(text: string): string {
-        const filteredText = this.filterText(text);
-        if (!filteredText) return '';
+        if (!text) return '';
         const keyInverse = this.modInverse(this.key, this.alphabetSize);
-        return filteredText
+        return text
+            .toLowerCase()
             .split('')
             .map(char => {
                 const pos = this.russianAlphabet.indexOf(char);
+                if (pos === -1) return char;
                 const decryptedPos = (pos * keyInverse) % this.alphabetSize;
                 return this.russianAlphabet[decryptedPos];
             })
@@ -76,6 +77,7 @@ class DecimationCipher {
     }
 }
 
+// Класс для шифрования методом Виженера с самогенерирующимся ключом
 class VigenereCipher {
     private russianAlphabet: string = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя';
     private alphabetSize: number;
@@ -83,113 +85,221 @@ class VigenereCipher {
 
     constructor(key: string) {
         this.alphabetSize = this.russianAlphabet.length;
-        this.initialKey = this.filterKey(key);
+        this.initialKey = key.toLowerCase().split('').filter(c => this.russianAlphabet.includes(c)).join('');
     }
 
-    private filterKey(key: string): string {
-        return key
-            .toLowerCase()
-            .split('')
-            .filter(c => this.russianAlphabet.includes(c))
-            .join('');
+    // Генерация ключевой буквы: сначала начальный ключ, затем исходный текст
+    private getKeyChar(keySequence: string[], originalTextChars: string[]): string {
+        if (originalTextChars.length < this.initialKey.length) {
+            return keySequence[originalTextChars.length];
+        } else {
+            const indexInOriginal = originalTextChars.length - this.initialKey.length;
+            return originalTextChars[indexInOriginal];
+        }
     }
 
-    private filterText(text: string): string {
-        return text
-            .toLowerCase()
-            .split('')
-            .filter(c => this.russianAlphabet.includes(c))
-            .join('');
-    }
-
+    // Шифрование: сначала используется начальный ключ, затем буквы исходного текста
     encrypt(text: string): string {
-        const filteredText = this.filterText(text);
-        if (!filteredText) return '';
+        if (!text) return '';
         const keySequence: string[] = this.initialKey.split('');
-        const encrypted: string[] = [];
-        for (let i = 0; i < filteredText.length; i++) {
-            let keyChar: string;
-            let k = i;
-            if (k > this.initialKey.length - 1) {
-                k = k - (this.initialKey.length - 1);
-                keyChar = filteredText[k - 1];
-            } else {
-                keyChar = keySequence[k];
+        const result: string[] = [];
+        const originalTextChars: string[] = [];
+        
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i].toLowerCase();
+            const pos = this.russianAlphabet.indexOf(char);
+            if (pos === -1) {
+                result.push(char);
+                continue;
             }
-            const charPos = this.russianAlphabet.indexOf(filteredText[i]);
+            
+            const keyChar = this.getKeyChar(keySequence, originalTextChars);
             const keyPos = this.russianAlphabet.indexOf(keyChar);
-            const encryptedPos = (charPos + keyPos) % this.alphabetSize;
+            const encryptedPos = (pos + keyPos) % this.alphabetSize;
             const encryptedChar = this.russianAlphabet[encryptedPos];
-            encrypted.push(encryptedChar);
+            
+            result.push(encryptedChar);
+            originalTextChars.push(char);
         }
-        return encrypted.join('');
+        
+        return result.join('');
     }
 
+    // Расшифрование: сначала восстанавливаем исходный текст, затем генерируем весь ключ, потом расшифровываем
     decrypt(text: string): string {
-        const filteredText = this.filterText(text);
-        if (!filteredText) return '';
+        if (!text) return '';
         const keySequence: string[] = this.initialKey.split('');
-        const decrypted: string[] = [];
-        for (let i = 0; i < filteredText.length; i++) {
-            let keyChar: string;
-            if (i >= this.initialKey.length) {
-                const k = i - this.initialKey.length + 1;
-                keyChar = decrypted[k - 1];
-            } else {
-                keyChar = keySequence[i];
+        
+        // Первый проход: восстанавливаем исходный текст для генерации ключа
+        const originalTextChars: string[] = [];
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i].toLowerCase();
+            const pos = this.russianAlphabet.indexOf(char);
+            if (pos === -1) {
+                originalTextChars.push(char);
+                continue;
             }
-            const charPos = this.russianAlphabet.indexOf(filteredText[i]);
+            
+            const keyChar = this.getKeyChar(keySequence, originalTextChars);
             const keyPos = this.russianAlphabet.indexOf(keyChar);
-            const decryptedPos = (charPos - keyPos + this.alphabetSize) % this.alphabetSize;
+            const decryptedPos = (pos - keyPos + this.alphabetSize) % this.alphabetSize;
             const decryptedChar = this.russianAlphabet[decryptedPos];
-            decrypted.push(decryptedChar);
+            
+            originalTextChars.push(decryptedChar);
         }
-        return decrypted.join('');
+        
+        // Генерация полного ключа: начальный ключ + исходный текст
+        const fullKey: string[] = [];
+        for (let i = 0; i < originalTextChars.length; i++) {
+            if (i < this.initialKey.length) {
+                fullKey.push(keySequence[i]);
+            } else {
+                const indexInOriginal = i - this.initialKey.length;
+                fullKey.push(originalTextChars[indexInOriginal]);
+            }
+        }
+        
+        // Второй проход: расшифрование с использованием готового ключа
+        const result: string[] = [];
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i].toLowerCase();
+            const pos = this.russianAlphabet.indexOf(char);
+            if (pos === -1) {
+                result.push(char);
+                continue;
+            }
+            
+            const keyChar = fullKey[i];
+            const keyPos = this.russianAlphabet.indexOf(keyChar);
+            const decryptedPos = (pos - keyPos + this.alphabetSize) % this.alphabetSize;
+            const decryptedChar = this.russianAlphabet[decryptedPos];
+            
+            result.push(decryptedChar);
+        }
+        
+        return result.join('');
     }
 }
 
 type CipherMethod = 'decimation' | 'vigenere';
 type Operation = 'encrypt' | 'decrypt';
 
+// Главный класс приложения для работы с шифрованием
 class CipherApp {
     private methodSelect!: HTMLSelectElement;
     private keyInput!: HTMLInputElement;
+    private textInput!: HTMLTextAreaElement;
     private fileInput!: HTMLInputElement;
+    private encryptTextBtn!: HTMLButtonElement;
+    private decryptTextBtn!: HTMLButtonElement;
     private encryptFileBtn!: HTMLButtonElement;
     private decryptFileBtn!: HTMLButtonElement;
+    private resultSection!: HTMLElement;
+    private resultOutput!: HTMLTextAreaElement;
+    private copyResultBtn!: HTMLButtonElement;
 
+    // Инициализация элементов интерфейса и привязка обработчиков событий
     constructor() {
-        this.initializeElements();
-        this.attachEventListeners();
-    }
-
-    private initializeElements(): void {
         this.methodSelect = document.getElementById('method') as HTMLSelectElement;
         this.keyInput = document.getElementById('key') as HTMLInputElement;
+        this.textInput = document.getElementById('textInput') as HTMLTextAreaElement;
         this.fileInput = document.getElementById('fileInput') as HTMLInputElement;
+        this.encryptTextBtn = document.getElementById('encryptTextBtn') as HTMLButtonElement;
+        this.decryptTextBtn = document.getElementById('decryptTextBtn') as HTMLButtonElement;
         this.encryptFileBtn = document.getElementById('encryptFileBtn') as HTMLButtonElement;
         this.decryptFileBtn = document.getElementById('decryptFileBtn') as HTMLButtonElement;
-    }
-
-    private attachEventListeners(): void {
+        this.resultSection = document.getElementById('resultSection') as HTMLElement;
+        this.resultOutput = document.getElementById('resultOutput') as HTMLTextAreaElement;
+        this.copyResultBtn = document.getElementById('copyResultBtn') as HTMLButtonElement;
+        
+        this.encryptTextBtn.addEventListener('click', () => this.handleTextOperation('encrypt'));
+        this.decryptTextBtn.addEventListener('click', () => this.handleTextOperation('decrypt'));
         this.encryptFileBtn.addEventListener('click', () => this.handleFileOperation('encrypt'));
         this.decryptFileBtn.addEventListener('click', () => this.handleFileOperation('decrypt'));
+        this.copyResultBtn.addEventListener('click', () => this.copyResult());
     }
 
+    // Создание объекта шифра в зависимости от выбранного метода
     private getCipher(method: CipherMethod, key: string): DecimationCipher | VigenereCipher {
-        return method === 'decimation' ? new DecimationCipher(key) : new VigenereCipher(key);
+        try {
+            return method === 'decimation' ? new DecimationCipher(key) : new VigenereCipher(key);
+        } catch (error) {
+            alert((error as Error).message);
+            throw error;
+        }
     }
 
-    private async handleFileOperation(operation: Operation): Promise<void> {
-        const file = this.fileInput.files![0];
+    // Обработка операции шифрования/расшифрования текста из текстового поля
+    private handleTextOperation(operation: Operation): void {
+        const text = this.textInput.value.trim();
+        if (!text) {
+            alert('Введите текст');
+            return;
+        }
+
         const method = this.methodSelect.value as CipherMethod;
         const key = this.keyInput.value.trim();
-        const content = await this.readFile(file);
-        const cipher = this.getCipher(method, key);
-        const result = operation === 'encrypt' ? cipher.encrypt(content) : cipher.decrypt(content);
-        this.downloadFile(result, `${operation === 'encrypt' ? 'encrypted' : 'decrypted'}_${file.name}`);
+        
+        if (!key) {
+            alert('Введите ключ');
+            return;
+        }
+
+        try {
+            const cipher = this.getCipher(method, key);
+            const result = operation === 'encrypt' ? cipher.encrypt(text) : cipher.decrypt(text);
+            this.showResult(result);
+        } catch (error) {
+        }
     }
 
+    // Обработка операции шифрования/расшифрования файла
+    private async handleFileOperation(operation: Operation): Promise<void> {
+        const file = this.fileInput.files![0];
+        if (!file) {
+            alert('Выберите файл');
+            return;
+        }
+
+        const method = this.methodSelect.value as CipherMethod;
+        const key = this.keyInput.value.trim();
+        
+        if (!key) {
+            alert('Введите ключ');
+            return;
+        }
+
+        try {
+            const content = await this.readFile(file);
+            const cipher = this.getCipher(method, key);
+            const result = operation === 'encrypt' ? cipher.encrypt(content) : cipher.decrypt(content);
+            this.downloadFile(result, `${operation === 'encrypt' ? 'encrypted' : 'decrypted'}_${file.name}`);
+        } catch (error) {
+        }
+    }
+
+    // Отображение результата операции в интерфейсе
+    private showResult(result: string): void {
+        this.resultOutput.value = result;
+        this.resultSection.style.display = 'block';
+    }
+
+    // Копирование результата в буфер обмена
+    private async copyResult(): Promise<void> {
+        try {
+            await navigator.clipboard.writeText(this.resultOutput.value);
+            const originalText = this.copyResultBtn.textContent;
+            this.copyResultBtn.textContent = 'Скопировано!';
+            setTimeout(() => {
+                if (this.copyResultBtn) {
+                    this.copyResultBtn.textContent = originalText;
+                }
+            }, 2000);
+        } catch (error) {
+        }
+    }
+
+    // Асинхронное чтение содержимого файла
     private readFile(file: File): Promise<string> {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -198,6 +308,7 @@ class CipherApp {
         });
     }
 
+    // Скачивание файла с результатом операции
     private downloadFile(content: string, filename: string): void {
         const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
@@ -214,6 +325,7 @@ class CipherApp {
     }
 }
 
+// Инициализация приложения после загрузки DOM
 document.addEventListener('DOMContentLoaded', () => {
     new CipherApp();
 });
