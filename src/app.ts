@@ -9,9 +9,15 @@ class DecimationCipher {
         this.key = this.validateKey(key);
     }
 
-    // Проверка, что ключ взаимно прост с размером алфавита
+    // Проверка: целое число 1..32 и взаимная простота с размером алфавита (33)
     private validateKey(key: string): number {
-        const k = parseInt(key, 10);
+        const maxKey = this.alphabetSize - 1;
+        const k = parseInt(key.trim(), 10);
+        if (Number.isNaN(k) || k < 1 || k > maxKey) {
+            throw new Error(
+                `Ключ для децимаций должен быть целым числом от 1 до ${maxKey} (введено: "${key.trim()}")`
+            );
+        }
         if (this.gcd(k, this.alphabetSize) !== 1) {
             throw new Error(`Ключ ${k} не взаимно прост с ${this.alphabetSize}`);
         }
