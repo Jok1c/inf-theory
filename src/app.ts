@@ -174,7 +174,6 @@ class CipherApp {
     private decryptFileBtn!: HTMLButtonElement;
     private resultSection!: HTMLElement;
     private resultOutput!: HTMLTextAreaElement;
-    private copyResultBtn!: HTMLButtonElement;
 
     // Инициализация элементов интерфейса и привязка обработчиков событий
     constructor() {
@@ -188,13 +187,11 @@ class CipherApp {
         this.decryptFileBtn = document.getElementById('decryptFileBtn') as HTMLButtonElement;
         this.resultSection = document.getElementById('resultSection') as HTMLElement;
         this.resultOutput = document.getElementById('resultOutput') as HTMLTextAreaElement;
-        this.copyResultBtn = document.getElementById('copyResultBtn') as HTMLButtonElement;
-        
+
         this.encryptTextBtn.addEventListener('click', () => this.handleTextOperation('encrypt'));
         this.decryptTextBtn.addEventListener('click', () => this.handleTextOperation('decrypt'));
         this.encryptFileBtn.addEventListener('click', () => this.handleFileOperation('encrypt'));
         this.decryptFileBtn.addEventListener('click', () => this.handleFileOperation('decrypt'));
-        this.copyResultBtn.addEventListener('click', () => this.copyResult());
     }
 
     // Создание объекта шифра в зависимости от выбранного метода
@@ -260,21 +257,6 @@ class CipherApp {
     private showResult(result: string): void {
         this.resultOutput.value = result;
         this.resultSection.style.display = 'block';
-    }
-
-    // Копирование результата в буфер обмена
-    private async copyResult(): Promise<void> {
-        try {
-            await navigator.clipboard.writeText(this.resultOutput.value);
-            const originalText = this.copyResultBtn.textContent;
-            this.copyResultBtn.textContent = 'Скопировано!';
-            setTimeout(() => {
-                if (this.copyResultBtn) {
-                    this.copyResultBtn.textContent = originalText;
-                }
-            }, 2000);
-        } catch (error) {
-        }
     }
 
     // Асинхронное чтение содержимого файла
