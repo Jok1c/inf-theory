@@ -125,42 +125,13 @@ class VigenereCipher {
         return result.join('');
     }
 
-    // Расшифрование: сначала восстанавливаем исходный текст, затем генерируем весь ключ, потом расшифровываем
+    // Расшифрование: автоключ строится только по расшифрованным буквам (не-буквы игнорируются)
     decrypt(text: string): string {
         if (!text) return '';
         const keySequence: string[] = this.initialKey.split('');
-        
-        // Первый проход: восстанавливаем исходный текст для генерации ключа
-        const originalTextChars: string[] = [];
-        for (let i = 0; i < text.length; i++) {
-            const char = text[i].toLowerCase();
-            const pos = this.russianAlphabet.indexOf(char);
-            if (pos === -1) {
-                originalTextChars.push(char);
-                continue;
-            }
-            
-            const keyChar = this.getKeyChar(keySequence, originalTextChars);
-            const keyPos = this.russianAlphabet.indexOf(keyChar);
-            const decryptedPos = (pos - keyPos + this.alphabetSize) % this.alphabetSize;
-            const decryptedChar = this.russianAlphabet[decryptedPos];
-            
-            originalTextChars.push(decryptedChar);
-        }
-        
-        // Генерация полного ключа: начальный ключ + исходный текст
-        const fullKey: string[] = [];
-        for (let i = 0; i < originalTextChars.length; i++) {
-            if (i < this.initialKey.length) {
-                fullKey.push(keySequence[i]);
-            } else {
-                const indexInOriginal = i - this.initialKey.length;
-                fullKey.push(originalTextChars[indexInOriginal]);
-            }
-        }
-        
-        // Второй проход: расшифрование с использованием готового ключа
         const result: string[] = [];
+        const decryptedTextChars: string[] = [];
+
         for (let i = 0; i < text.length; i++) {
             const char = text[i].toLowerCase();
             const pos = this.russianAlphabet.indexOf(char);
@@ -168,15 +139,16 @@ class VigenereCipher {
                 result.push(char);
                 continue;
             }
-            
-            const keyChar = fullKey[i];
+
+            const keyChar = this.getKeyChar(keySequence, decryptedTextChars);
             const keyPos = this.russianAlphabet.indexOf(keyChar);
             const decryptedPos = (pos - keyPos + this.alphabetSize) % this.alphabetSize;
             const decryptedChar = this.russianAlphabet[decryptedPos];
-            
+
             result.push(decryptedChar);
+            decryptedTextChars.push(decryptedChar);
         }
-        
+
         return result.join('');
     }
 }
