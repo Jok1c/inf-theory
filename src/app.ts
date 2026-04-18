@@ -97,8 +97,8 @@ class VigenereCipher {
     // Генерация ключевой буквы: сначала начальный ключ, затем исходный текст
     private getKeyChar(keySequence: string[], originalTextChars: string[]): string {
         if (originalTextChars.length < this.initialKey.length) {
-            return keySequence[originalTextChars.length];
-        } else {
+            return keySequence[originalTextChars.length]; 
+        } else { 
             const indexInOriginal = originalTextChars.length - this.initialKey.length;
             return originalTextChars[indexInOriginal];
         }
@@ -132,14 +132,14 @@ class VigenereCipher {
     }
 
     // Расшифрование: автоключ строится только по расшифрованным буквам (не-буквы игнорируются)
-    decrypt(text: string): string {
+    decrypt(text: string): string { 
         if (!text) return '';
-        const keySequence: string[] = this.initialKey.split('');
+        const keySequence: string[] = this.initialKey.split(''); 
         const result: string[] = [];
         const decryptedTextChars: string[] = [];
 
         for (let i = 0; i < text.length; i++) {
-            const char = text[i].toLowerCase();
+            const char = text[i].toLowerCase(); 
             const pos = this.russianAlphabet.indexOf(char);
             if (pos === -1) {
                 result.push(char);
