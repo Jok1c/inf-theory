@@ -22,11 +22,13 @@
 
 namespace {
 
-constexpr int kMargin = 8;
-constexpr int kLabelW = 100;
-constexpr int kEditW = 90;
-constexpr int kRowH = 28;
-constexpr int kBtnH = 32;
+constexpr int kMargin = 14;
+constexpr int kClientW = 660;
+constexpr int kClientH = 748;
+constexpr int kLabelW = 118;
+constexpr int kEditW = 120;
+constexpr int kRowH = 30;
+constexpr int kBtnH = 30;
 
 enum ControlId : int {
     ID_EDIT_P = 100,
@@ -60,6 +62,9 @@ HWND g_btnDecrypt = nullptr;
 HWND g_editLog = nullptr;
 
 HFONT g_font = nullptr;
+HBRUSH g_brushWindow = nullptr;
+HBRUSH g_brushLog = nullptr;
+HBRUSH g_brushReadOnly = nullptr;
 
 HWND create_label(HWND parent, const wchar_t *text, int x, int y, int w, int h, bool bold = false)
 {
@@ -326,60 +331,69 @@ void on_browse_output()
 
 void create_ui(HWND hwnd)
 {
-    const int clientW = 704;
+    const int contentW = kClientW - 2 * kMargin;
+    const int fieldX = kMargin + kLabelW + 10;
+    const int fieldW = contentW - kLabelW - 10;
     int y = kMargin;
 
-    create_label(hwnd, L"RSA — Шифрование / Дешифрирование файла", kMargin, y, clientW - 2 * kMargin, 24,
-                 true);
-    y += 36;
+    create_label(hwnd, L"RSA — Шифрование / Дешифрирование файла", kMargin, y, contentW, 22, true);
+    y += 32;
 
-    const int groupW = 336;
-    const int rightX = kMargin + groupW + 12;
-    create_group(hwnd, L"Параметры", kMargin, y, groupW, 116);
-    create_group(hwnd, L"Вычисленные значения", rightX, y, groupW, 116);
-
-    int rowY = y + 24;
-    create_label(hwnd, L"p (простое):", kMargin + 12, rowY, kLabelW, 20);
-    g_editP = create_edit(hwnd, ID_EDIT_P, kMargin + 110, rowY - 2, kEditW, 22);
-    create_label(hwnd, L"r = p*q:", rightX + 12, rowY, kLabelW, 20);
-    g_editR = create_edit(hwnd, ID_EDIT_R, rightX + 110, rowY - 2, 210, 22, true);
+    create_group(hwnd, L"Параметры", kMargin, y, contentW, 108);
+    int rowY = y + 22;
+    create_label(hwnd, L"p (простое):", kMargin + 10, rowY, kLabelW, 20);
+    g_editP = create_edit(hwnd, ID_EDIT_P, fieldX, rowY - 2, kEditW, 24);
 
     rowY += kRowH;
-    create_label(hwnd, L"q (простое):", kMargin + 12, rowY, kLabelW, 20);
-    g_editQ = create_edit(hwnd, ID_EDIT_Q, kMargin + 110, rowY - 2, kEditW, 22);
-    create_label(hwnd, L"φ(r):", rightX + 12, rowY, kLabelW, 20);
-    g_editPhi = create_edit(hwnd, ID_EDIT_PHI, rightX + 110, rowY - 2, 210, 22, true);
+    create_label(hwnd, L"q (простое):", kMargin + 10, rowY, kLabelW, 20);
+    g_editQ = create_edit(hwnd, ID_EDIT_Q, fieldX, rowY - 2, kEditW, 24);
 
     rowY += kRowH;
-    create_label(hwnd, L"Kз (закрытый):", kMargin + 12, rowY, kLabelW, 20);
-    g_editKs = create_edit(hwnd, ID_EDIT_KS, kMargin + 110, rowY - 2, kEditW, 22);
-    create_label(hwnd, L"Ko (открытый):", rightX + 12, rowY, kLabelW, 20);
-    g_editKo = create_edit(hwnd, ID_EDIT_KO, rightX + 110, rowY - 2, 210, 22, true);
+    create_label(hwnd, L"Kз (закрытый):", kMargin + 10, rowY, kLabelW, 20);
+    g_editKs = create_edit(hwnd, ID_EDIT_KS, fieldX, rowY - 2, kEditW, 24);
 
-    y += 124;
-    create_button(hwnd, L"Вычислить ключи", ID_BTN_CALC, kMargin, y, 200, kBtnH);
-    y += kBtnH + 10;
+    y += 118;
+    create_group(hwnd, L"Вычисленные значения", kMargin, y, contentW, 108);
+    rowY = y + 22;
+    create_label(hwnd, L"r = p*q:", kMargin + 10, rowY, kLabelW, 20);
+    g_editR = create_edit(hwnd, ID_EDIT_R, fieldX, rowY - 2, fieldW, 24, true);
 
-    create_group(hwnd, L"Файлы", kMargin, y, clientW - 2 * kMargin, 96);
-    rowY = y + 24;
-    create_label(hwnd, L"Входной файл:", kMargin + 12, rowY, kLabelW + 10, 20);
-    g_editInput = create_edit(hwnd, ID_EDIT_INPUT, kMargin + 110, rowY - 2, 470, 22);
-    create_button(hwnd, L"Обзор...", ID_BTN_BROWSE_IN, kMargin + 590, rowY - 2, 88, 24);
+    rowY += kRowH;
+    create_label(hwnd, L"φ(r):", kMargin + 10, rowY, kLabelW, 20);
+    g_editPhi = create_edit(hwnd, ID_EDIT_PHI, fieldX, rowY - 2, fieldW, 24, true);
 
-    rowY += kRowH + 4;
-    create_label(hwnd, L"Выходной файл:", kMargin + 12, rowY, kLabelW + 10, 20);
-    g_editOutput = create_edit(hwnd, ID_EDIT_OUTPUT, kMargin + 110, rowY - 2, 470, 22);
-    create_button(hwnd, L"Обзор...", ID_BTN_BROWSE_OUT, kMargin + 590, rowY - 2, 88, 24);
+    rowY += kRowH;
+    create_label(hwnd, L"Ko (открытый):", kMargin + 10, rowY, kLabelW, 20);
+    g_editKo = create_edit(hwnd, ID_EDIT_KO, fieldX, rowY - 2, fieldW, 24, true);
 
-    y += 106;
-    g_btnEncrypt = create_button(hwnd, L"Зашифровать", ID_BTN_ENCRYPT, kMargin + 12, y, 160, 40, false);
-    g_btnDecrypt = create_button(hwnd, L"Расшифровать", ID_BTN_DECRYPT, kMargin + 190, y, 160, 40, false);
-    create_button(hwnd, L"Очистить", ID_BTN_CLEAR, kMargin + 370, y, 158, 40);
-    y += 52;
+    y += 118;
+    create_button(hwnd, L"Вычислить ключи", ID_BTN_CALC, kMargin + contentW - 180, y, 180, kBtnH);
+    y += kBtnH + 14;
 
+    constexpr int kBrowseW = 78;
+    create_group(hwnd, L"Файлы", kMargin, y, contentW, 100);
+    rowY = y + 22;
+    create_label(hwnd, L"Входной файл:", kMargin + 10, rowY, kLabelW, 20);
+    create_button(hwnd, L"Обзор...", ID_BTN_BROWSE_IN, fieldX, rowY - 2, kBrowseW, 26);
+    g_editInput = create_edit(hwnd, ID_EDIT_INPUT, fieldX + kBrowseW + 8, rowY - 2,
+                              fieldW - kBrowseW - 8, 24);
+
+    rowY += kRowH + 2;
+    create_label(hwnd, L"Выходной файл:", kMargin + 10, rowY, kLabelW, 20);
+    create_button(hwnd, L"Обзор...", ID_BTN_BROWSE_OUT, fieldX, rowY - 2, kBrowseW, 26);
+    g_editOutput = create_edit(hwnd, ID_EDIT_OUTPUT, fieldX + kBrowseW + 8, rowY - 2,
+                               fieldW - kBrowseW - 8, 24);
+
+    y += 110;
+    create_button(hwnd, L"Очистить", ID_BTN_CLEAR, kMargin, y, 130, 36);
+    g_btnEncrypt = create_button(hwnd, L"Зашифровать", ID_BTN_ENCRYPT, kMargin + 142, y, 150, 36, false);
+    g_btnDecrypt = create_button(hwnd, L"Расшифровать", ID_BTN_DECRYPT, kMargin + 302, y, 150, 36, false);
+    y += 46;
+
+    const int logH = kClientH - y - kMargin;
     g_editLog = CreateWindowW(
         L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL | ES_MULTILINE | ES_AUTOVSCROLL,
-        kMargin, y, clientW - 2 * kMargin, 280, hwnd, reinterpret_cast<HMENU>(ID_EDIT_LOG),
+        kMargin, y, contentW, logH > 80 ? logH : 80, hwnd, reinterpret_cast<HMENU>(ID_EDIT_LOG),
         GetModuleHandleW(nullptr), nullptr);
     SendMessageW(g_editLog, WM_SETFONT, reinterpret_cast<WPARAM>(g_font), TRUE);
 }
@@ -409,9 +423,41 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return 0;
         }
         break;
+    case WM_CTLCOLORSTATIC: {
+        HDC hdc = reinterpret_cast<HDC>(wParam);
+        SetBkMode(hdc, TRANSPARENT);
+        SetTextColor(hdc, RGB(45, 52, 64));
+        return reinterpret_cast<LRESULT>(g_brushWindow);
+    }
+    case WM_CTLCOLOREDIT: {
+        HDC hdc = reinterpret_cast<HDC>(wParam);
+        HWND ctrl = reinterpret_cast<HWND>(lParam);
+        SetBkMode(hdc, OPAQUE);
+        if (ctrl == g_editLog) {
+            SetBkColor(hdc, RGB(252, 251, 235));
+            SetTextColor(hdc, RGB(28, 32, 40));
+            return reinterpret_cast<LRESULT>(g_brushLog);
+        }
+        if (ctrl == g_editR || ctrl == g_editPhi || ctrl == g_editKo) {
+            SetBkColor(hdc, RGB(228, 234, 242));
+            SetTextColor(hdc, RGB(55, 62, 74));
+            return reinterpret_cast<LRESULT>(g_brushReadOnly);
+        }
+        SetBkColor(hdc, RGB(255, 255, 255));
+        SetTextColor(hdc, RGB(20, 24, 32));
+        return reinterpret_cast<LRESULT>(GetStockObject(WHITE_BRUSH));
+    }
+    case WM_CTLCOLORBTN:
+        return reinterpret_cast<LRESULT>(g_brushWindow);
     case WM_DESTROY:
         if (g_font)
             DeleteObject(g_font);
+        if (g_brushWindow)
+            DeleteObject(g_brushWindow);
+        if (g_brushLog)
+            DeleteObject(g_brushLog);
+        if (g_brushReadOnly)
+            DeleteObject(g_brushReadOnly);
         PostQuitMessage(0);
         return 0;
     default:
@@ -430,18 +476,28 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR, int nCmdShow)
     g_font = CreateFontW(-13, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
                          CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, L"Segoe UI");
 
+    g_brushWindow = CreateSolidBrush(RGB(243, 246, 250));
+    g_brushLog = CreateSolidBrush(RGB(252, 251, 235));
+    g_brushReadOnly = CreateSolidBrush(RGB(228, 234, 242));
+
     const wchar_t *className = L"TI3RsaWindow";
     WNDCLASSEXW wc = {};
     wc.cbSize = sizeof(wc);
     wc.lpfnWndProc = WndProc;
     wc.hInstance = hInstance;
     wc.hCursor = LoadCursorW(nullptr, IDC_ARROW);
-    wc.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_BTNFACE + 1);
+    wc.hbrBackground = g_brushWindow;
     wc.lpszClassName = className;
     RegisterClassExW(&wc);
 
-    g_hwnd = CreateWindowExW(0, className, L"RSA", WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
-                             CW_USEDEFAULT, CW_USEDEFAULT, 720, 760, nullptr, nullptr, hInstance, nullptr);
+    const DWORD winStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+    RECT rc = {0, 0, kClientW, kClientH};
+    AdjustWindowRect(&rc, winStyle, FALSE);
+    const int winW = rc.right - rc.left;
+    const int winH = rc.bottom - rc.top;
+
+    g_hwnd = CreateWindowExW(0, className, L"RSA", winStyle, CW_USEDEFAULT, CW_USEDEFAULT, winW,
+                               winH, nullptr, nullptr, hInstance, nullptr);
 
     create_ui(g_hwnd);
     ShowWindow(g_hwnd, nCmdShow);
